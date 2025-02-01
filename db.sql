@@ -1,0 +1,1 @@
+CREATE DATABASE neatcode_db;
