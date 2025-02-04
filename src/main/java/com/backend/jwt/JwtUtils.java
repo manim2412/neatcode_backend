@@ -1,9 +1,7 @@
 package com.backend.jwt;
 
 import com.backend.entity.User;
-import com.nimbusds.jose.Algorithm;
 import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
@@ -54,11 +52,6 @@ public class JwtUtils {
 
     public boolean validateToken(String token, String authenticatedUsername) {
         final String usernameFromToken = getUsernameFromToken(token);
-
-        System.out.println("======");
-        System.out.println(usernameFromToken);
-        System.out.println("=====");
-
         final boolean isEqualUsername = usernameFromToken.equals(authenticatedUsername);
         final boolean tokenExpired = isTokenExpired(token);
 

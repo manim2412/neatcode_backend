@@ -12,13 +12,13 @@ import lombok.ToString;
 @ToString
 @NoArgsConstructor
 public class RegistrationRequest {
-    @Email(message = "{registration_email_is_not_valid}")
-    @NotEmpty(message = "{registration_email_not_empty}")
+    @Email(message = "registration request email should ALLOW EMAIL FORMAT")
+    @NotEmpty(message = "registration request email should NOT EMPTY")
     private String email;
 
-    @NotEmpty(message = "{registration_username_not_empty}")
+    @NotEmpty(message = "registration request username should NOT EMPTY")
     private String username;
 
-    @NotEmpty(message = "{registration_password_not_empty}")
+    @NotEmpty(message = "registration request password should NOT EMPTY")
     private String password;
 }

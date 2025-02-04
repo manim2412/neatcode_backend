@@ -9,6 +9,7 @@ import com.backend.payload.RegistrationResponse;
 import com.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -16,50 +17,38 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class UserService {
-    private static final String REGISTRATION_SUCCESSFUL = "registration_successful";
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
 
-    public User findByUsername(String username) {
-        return userRepository.findByUsername(username);
-    }
+    @Value("${admin.username}")
+    private String adminUsername;
+
+    @Value("{admin.email}")
+    private String adminEmail;
 
     public RegistrationResponse registration(RegistrationRequest request) {
-        validateUser(request);
-
-        final User user = new User();
+        User user = new User();
         user.setUsername(request.getUsername());
         user.setEmail(request.getEmail());
+        user.setUserRole(getUserRole(user.getUsername(), user.getEmail()));
         user.setPassword(bCryptPasswordEncoder.encode(request.getPassword()));
-        user.setUserRole(UserRole.USER);
+
+        if (userRepository.existsByUsername(user.getUsername()) || userRepository.existsByEmail(user.getEmail())) {
+            log.info("username : {}, email : {} registration failed", user.getUsername(), user.getEmail());
+            throw new RegistrationException("Account Already Exist");
+        }
 
         userRepository.save(user);
+        log.info("username : {}, email : {} registration success", user.getUsername(), user.getEmail());
 
-        log.info("{} registered successfully!", user.getUsername());
-        return new RegistrationResponse("User Registration Success");
+        return new RegistrationResponse(user.getUsername(), user.getEmail(), "Registration Success");
     }
 
-    private void validateUser(RegistrationRequest request) {
-        final String email = request.getEmail();
-        final String username = request.getUsername();
-        checkEmail(email);
-        checkUsername(username);
-    }
-
-    private void checkUsername(String username) {
-        final boolean existsByUsername = userRepository.existsByUsername(username);
-        if (existsByUsername) {
-            log.warn("{} USERNAME is already being used!", username);
-            throw new RegistrationException("Already exist USERNAME");
+    private UserRole getUserRole(String username, String email) {
+        if (username.equals(adminUsername) || email.equals(adminEmail)) {
+            return UserRole.ADMIN;
         }
-    }
-
-    private void checkEmail(String email) {
-        final boolean existsByEmail = userRepository.existsByEmail(email);
-        if (existsByEmail) {
-            log.warn("{} EMAIL is already being used!", email);
-            throw new RegistrationException("Already exist EMAIL");
-        }
+        return UserRole.USER;
     }
 
     public AuthenticatedUserDto findAuthenticatedUserByUsername(String username) {
@@ -70,5 +59,9 @@ public class UserService {
         dto.setUserRole(user.getUserRole());
         dto.setPassword(user.getPassword());
         return dto;
+    }
+
+    public User findByUsername(String username) {
+        return userRepository.findByUsername(username);
     }
 }
