@@ -1,7 +1,8 @@
 package com.backend.service;
 
 import com.backend.constant.UserRole;
-import com.backend.payload.AuthenticatedUserDto;
+import com.backend.entity.CustomUser;
+import com.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -18,27 +19,23 @@ import java.util.Objects;
 @Service
 @RequiredArgsConstructor
 public class CustomUserDetailsService implements UserDetailsService {
-    private static final String USERNAME_OR_PASSWORD_INVALID = "Invalid username or password.";
-
-    private final UserService userService;
+    private static final String USERNAME_NOT_FOUND = "username not found";
+    private final UserRepository userRepository;
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        final AuthenticatedUserDto dto = userService.findAuthenticatedUserByUsername(username);
+        System.out.println("loadbyUsername call");
+        CustomUser user = userRepository.findByUsername(username);
 
-        if (Objects.isNull(dto)) {
-            throw new UsernameNotFoundException(USERNAME_OR_PASSWORD_INVALID);
+        if (user == null) {
+            throw new UsernameNotFoundException(USERNAME_NOT_FOUND);
         }
 
-        final String authenticatedUsername = dto.getUsername();
-        final String authenticatedPassword = dto.getPassword();
+        String authenticatedUsername = user.getUsername();
+        String authenticatedPassword = user.getPassword();
+        UserRole authenticatedUserRole = user.getUserRole();
 
-        System.out.println("gfewjojowge");
-        System.out.println("call from CustomUserDetailsService");
-        System.out.println(authenticatedPassword);
-
-        final UserRole userRole = dto.getUserRole();
-        final SimpleGrantedAuthority grantedAuthority = new SimpleGrantedAuthority(userRole.name());
+        final SimpleGrantedAuthority grantedAuthority = new SimpleGrantedAuthority(authenticatedUserRole.name());
 
         return new User(authenticatedUsername, authenticatedPassword , Collections.singletonList(grantedAuthority));
     }

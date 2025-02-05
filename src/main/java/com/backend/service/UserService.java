@@ -1,11 +1,11 @@
 package com.backend.service;
 
 import com.backend.constant.UserRole;
-import com.backend.entity.User;
+import com.backend.entity.CustomUser;
+import com.backend.exception.LoginException;
 import com.backend.exception.RegistrationException;
-import com.backend.payload.AuthenticatedUserDto;
-import com.backend.payload.RegistrationRequest;
-import com.backend.payload.RegistrationResponse;
+import com.backend.jwt.JwtUtils;
+import com.backend.payload.*;
 import com.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 public class UserService {
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
+    private final JwtUtils jwtUtils;
 
     @Value("${admin.username}")
     private String adminUsername;
@@ -27,7 +28,7 @@ public class UserService {
     private String adminEmail;
 
     public RegistrationResponse registration(RegistrationRequest request) {
-        User user = new User();
+        CustomUser user = new CustomUser();
         user.setUsername(request.getUsername());
         user.setEmail(request.getEmail());
         user.setUserRole(getUserRole(user.getUsername(), user.getEmail()));
@@ -44,6 +45,33 @@ public class UserService {
         return new RegistrationResponse(user.getUsername(), user.getEmail(), "Registration Success");
     }
 
+    public LoginResponse login(LoginRequest request) {
+        String username = request.getUsername();
+        String email = request.getEmail();
+        String password = request.getPassword();
+
+        CustomUser findUser1 = this.findByUsername(username);
+        CustomUser findUser2 = this.findByEmail(email);
+
+        String token;
+
+        if ((findUser1 == null) && (findUser2 == null)) {
+            throw new LoginException("Cannot find User");
+        } else if (findUser1 != null) {
+            if (!bCryptPasswordEncoder.matches(password, findUser1.getPassword())) {
+                throw new LoginException("Password Failed");
+            }
+            token = jwtUtils.generateToken(findUser1);
+        } else {
+            if (!bCryptPasswordEncoder.matches(password, findUser2.getPassword())) {
+                throw new LoginException("Password Failed");
+            }
+            token = jwtUtils.generateToken(findUser2);
+        }
+
+        return new LoginResponse(token);
+    }
+
     private UserRole getUserRole(String username, String email) {
         if (username.equals(adminUsername) || email.equals(adminEmail)) {
             return UserRole.ADMIN;
@@ -51,17 +79,11 @@ public class UserService {
         return UserRole.USER;
     }
 
-    public AuthenticatedUserDto findAuthenticatedUserByUsername(String username) {
-        final User user = findByUsername(username);
-        AuthenticatedUserDto dto = new AuthenticatedUserDto();
-        dto.setUsername(user.getUsername());
-        dto.setEmail(user.getEmail());
-        dto.setUserRole(user.getUserRole());
-        dto.setPassword(user.getPassword());
-        return dto;
+    public CustomUser findByUsername(String username) {
+        return  userRepository.findByUsername(username);
     }
 
-    public User findByUsername(String username) {
-        return userRepository.findByUsername(username);
+    public CustomUser findByEmail(String email) {
+        return userRepository.findByEmail(email);
     }
 }

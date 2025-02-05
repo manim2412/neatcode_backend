@@ -1,14 +1,19 @@
 package com.backend.jwt;
 
-import com.backend.entity.User;
+import com.backend.entity.CustomUser;
+import com.backend.service.CustomUserDetailsService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
@@ -17,8 +22,10 @@ import java.util.Date;
 
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class JwtUtils {
     private static final Logger logger = LoggerFactory.getLogger(JwtUtils.class);
+    private final CustomUserDetailsService userDetailsService;
 
     @Value("${jwt.secretKey}")
     private String secretKey;
@@ -29,7 +36,7 @@ public class JwtUtils {
     @Value("${jwt.expirationMinute}")
     private long expirationMinute;
 
-    public String generateToken(User user) {
+    public String generateToken(CustomUser user) {
         return Jwts.builder()
                 .subject(user.getUsername())
                 .issuer(issuer)
@@ -76,5 +83,8 @@ public class JwtUtils {
                 .getBody();               // Claims 반환
     }
 
-
+    public Authentication getAuthentication(String token) {
+        UserDetails userDetails = userDetailsService.loadUserByUsername(getUsernameFromToken(token));
+        return new UsernamePasswordAuthenticationToken(userDetails, "", userDetails.getAuthorities());
+    }
 }
