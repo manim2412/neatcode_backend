@@ -34,15 +34,28 @@ public class JwtUtils {
     @Value("${jwt.issuer}")
     private String issuer;
 
-    @Value("${jwt.expirationMinute}")
-    private long expirationMinute;
+    @Value("${jwt.access.expirationMinute}")
+    private long accessExpirationMinute;
 
-    public String generateToken(CustomUser user) {
+    @Value("${jwt.refresh.expirationMinute}")
+    private long refreshExpirationMinute;
+
+    public String generateAccessToken(CustomUser user) {
         return Jwts.builder()
                 .subject(user.getUsername())
                 .issuer(issuer)
                 .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + expirationMinute * 60 * 1000))
+                .expiration(new Date(System.currentTimeMillis() + accessExpirationMinute * 60 * 1000))
+                .signWith(key())
+                .compact();
+    }
+
+    public String generateRefreshToken(CustomUser user) {
+        return Jwts.builder()
+                .subject(user.getUsername())
+                .issuer(issuer)
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + refreshExpirationMinute * 60 * 1000))
                 .signWith(key())
                 .compact();
     }

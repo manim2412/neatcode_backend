@@ -53,7 +53,7 @@ public class UserService {
         CustomUser findUser1 = this.findByUsername(username);
         CustomUser findUser2 = this.findByEmail(email);
 
-        String token;
+        String accessToken;
 
         if ((findUser1 == null) && (findUser2 == null)) {
             throw new LoginException("Cannot find User");
@@ -61,15 +61,15 @@ public class UserService {
             if (!bCryptPasswordEncoder.matches(password, findUser1.getPassword())) {
                 throw new LoginException("Password Failed");
             }
-            token = jwtUtils.generateToken(findUser1);
+            accessToken = jwtUtils.generateAccessToken(findUser1);
         } else {
             if (!bCryptPasswordEncoder.matches(password, findUser2.getPassword())) {
                 throw new LoginException("Password Failed");
             }
-            token = jwtUtils.generateToken(findUser2);
+            accessToken = jwtUtils.generateAccessToken(findUser2);
         }
 
-        return new LoginResponse(token);
+        return new LoginResponse(accessToken);
     }
 
     private UserRole getUserRole(String username, String email) {
