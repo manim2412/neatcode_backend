@@ -1,12 +1,16 @@
 package com.backend.jwt;
 
 import com.backend.entity.CustomUser;
+import com.backend.exception.CustomJwtException;
 import com.backend.service.CustomUserDetailsService;
+import com.backend.utils.CustomStringUtils;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
@@ -112,5 +116,28 @@ public class JwtUtils {
     public Authentication getAuthentication(String token) {
         UserDetails userDetails = userDetailsService.loadUserByUsername(getUsernameFromToken(token));
         return new UsernamePasswordAuthenticationToken(userDetails, "", userDetails.getAuthorities());
+    }
+
+    public static String getAccessToken(HttpServletRequest request) {
+        String header = request.getHeader("Authorization");
+        if (CustomStringUtils.isNull(header)) {
+            throw new CustomJwtException("Authorization Header is NULL");
+        }
+        String accessToken = header.replace("Bearer ", "");
+        return accessToken;
+    }
+
+    public static String getRefreshToken(HttpServletRequest request) {
+        Cookie[] cookies = request.getCookies();
+        String refreshToken = "";
+        for (Cookie cookie : cookies) {
+            if (cookie.getName().equals("refreshToken")) {
+                refreshToken = cookie.getValue();
+            }
+        }
+        if (CustomStringUtils.isBlank(refreshToken)) {
+            throw new CustomJwtException("RefreshToken Cookie is NULL");
+        }
+        return refreshToken;
     }
 }

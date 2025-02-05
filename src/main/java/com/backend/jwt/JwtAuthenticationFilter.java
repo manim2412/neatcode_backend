@@ -24,6 +24,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         String header = request.getHeader("Authorization");
+//        String refreshToken = CookieUtils.getRefreshToken(request);
 
         if (CustomStringUtils.isNotNull(header) && header.startsWith("Bearer ")) {
             String token = header.replace("Bearer ", "");
@@ -34,6 +35,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 securityContext.setAuthentication(authentication);
             }
         }
+
+        filterChain.doFilter(request, response);
+    }
+
+    //@Override
+    protected void doFilterInternal1(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+        String accessToken = JwtUtils.getAccessToken(request);
+        String refreshToken = JwtUtils.getRefreshToken(request);
+
 
         filterChain.doFilter(request, response);
     }
