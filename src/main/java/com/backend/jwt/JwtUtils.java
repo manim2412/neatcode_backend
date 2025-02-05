@@ -3,6 +3,7 @@ package com.backend.jwt;
 import com.backend.entity.CustomUser;
 import com.backend.service.CustomUserDetailsService;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
@@ -53,18 +54,29 @@ public class JwtUtils {
                 .getPayload().getSubject();
     }
 
+
     private Key key() {
         return Keys.hmacShaKeyFor(Decoders.BASE64.decode(secretKey));
     }
 
-    public boolean validateToken(String token, String authenticatedUsername) {
-        final String usernameFromToken = getUsernameFromToken(token);
-        final boolean isEqualUsername = usernameFromToken.equals(authenticatedUsername);
-        final boolean tokenExpired = isTokenExpired(token);
+    public boolean validateToken(String token) {
+        Jws<Claims> claims = Jwts.parser().setSigningKey(key()).build().parseSignedClaims(token);
+//        System.out.println(claims.getPayload().getSubject());
+//        System.out.println(claims.getPayload().getExpiration());
+//        System.out.println(claims.getPayload().getIssuedAt());
+//        System.out.println(claims.getPayload().getIssuer());
 
-        return isEqualUsername && !tokenExpired;
+        try {
+            Date expiration = claims.getPayload().getExpiration();
+            return expiration.after(new Date());
+        } catch (Exception e) {
+            log.info("JwtUtils => validate token error");
+        }
+
+        return true;
     }
 
+    /*
     private boolean isTokenExpired(String token) {
         final Date expirationDateFromToken = getExpirationDateFromToken(token);
         return expirationDateFromToken.before(new Date());
@@ -77,11 +89,12 @@ public class JwtUtils {
 
     private Claims getClaimsFromToken(String token) {
         return Jwts.parser()
-                .setSigningKey(secretKey)  // 시크릿 키 설정
+                .setSigningKey(secretKey)
                 .build()
-                .parseClaimsJws(token)     // 토큰 파싱
-                .getBody();               // Claims 반환
+                .parseClaimsJws(token)
+                .getBody();
     }
+     */
 
     public Authentication getAuthentication(String token) {
         UserDetails userDetails = userDetailsService.loadUserByUsername(getUsernameFromToken(token));
