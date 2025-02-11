@@ -71,17 +71,12 @@ public class JwtUtils {
                 .getPayload().getSubject();
     }
 
-
     private Key key() {
         return Keys.hmacShaKeyFor(Decoders.BASE64.decode(secretKey));
     }
 
     public boolean validateToken(String token) {
         Jws<Claims> claims = Jwts.parser().setSigningKey(key()).build().parseSignedClaims(token);
-//        System.out.println(claims.getPayload().getSubject());
-//        System.out.println(claims.getPayload().getExpiration());
-//        System.out.println(claims.getPayload().getIssuedAt());
-//        System.out.println(claims.getPayload().getIssuer());
 
         try {
             Date expiration = claims.getPayload().getExpiration();
@@ -93,32 +88,23 @@ public class JwtUtils {
         return true;
     }
 
-    /*
-    private boolean isTokenExpired(String token) {
-        final Date expirationDateFromToken = getExpirationDateFromToken(token);
-        return expirationDateFromToken.before(new Date());
+    public boolean validateExpired(String token) {
+        Jws<Claims> claims = Jwts.parser().setSigningKey(key()).build().parseSignedClaims(token);
+        Date expiration = claims.getPayload().getExpiration();
+        return expiration.after(new Date());
     }
-
-    private Date getExpirationDateFromToken(String token) {
-        final Claims claims = getClaimsFromToken(token);
-        return claims.getExpiration();
-    }
-
-    private Claims getClaimsFromToken(String token) {
-        return Jwts.parser()
-                .setSigningKey(secretKey)
-                .build()
-                .parseClaimsJws(token)
-                .getBody();
-    }
-     */
 
     public Authentication getAuthentication(String token) {
         UserDetails userDetails = userDetailsService.loadUserByUsername(getUsernameFromToken(token));
         return new UsernamePasswordAuthenticationToken(userDetails, "", userDetails.getAuthorities());
     }
 
-    public static String getAccessToken(HttpServletRequest request) {
+    public Date getExpiredDate(String token) {
+        Jws<Claims> claims = Jwts.parser().setSigningKey(key()).build().parseSignedClaims(token);
+        return (Date) claims.getPayload().getExpiration();
+    }
+
+    public String getAccessToken(HttpServletRequest request) {
         String header = request.getHeader("Authorization");
         if (CustomStringUtils.isNull(header)) {
             throw new CustomJwtException("Authorization Header is NULL");
@@ -127,7 +113,7 @@ public class JwtUtils {
         return accessToken;
     }
 
-    public static String getRefreshToken(HttpServletRequest request) {
+    public String getRefreshToken(HttpServletRequest request) {
         Cookie[] cookies = request.getCookies();
         String refreshToken = "";
         for (Cookie cookie : cookies) {

@@ -1,5 +1,6 @@
 package com.backend.controller;
 
+import com.backend.jwt.JwtUtils;
 import com.backend.payload.LoginRequest;
 import com.backend.payload.LoginResponse;
 import com.backend.service.UserService;
@@ -16,8 +17,9 @@ import org.springframework.web.bind.annotation.RestController;
 @Slf4j
 public class LoginController {
     private final UserService userService;
+    private final JwtUtils jwtUtils;
 
-    @PostMapping("/login")
+    @PostMapping("/api/login")
     public ResponseEntity<LoginResponse> loginRequest(@Valid @RequestBody LoginRequest request) {
         LoginResponse loginResponse = userService.login(request);
         return ResponseEntity.ok(loginResponse);

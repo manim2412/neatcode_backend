@@ -2,11 +2,14 @@ package com.backend.service;
 
 import com.backend.constant.UserRole;
 import com.backend.entity.CustomUser;
+import com.backend.entity.RefreshToken;
 import com.backend.exception.LoginException;
 import com.backend.exception.RegistrationException;
 import com.backend.jwt.JwtUtils;
 import com.backend.payload.*;
+import com.backend.repository.RefreshTokenRepository;
 import com.backend.repository.UserRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -16,10 +19,12 @@ import org.springframework.stereotype.Service;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class UserService {
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
     private final JwtUtils jwtUtils;
+    private final RefreshTokenRepository refreshTokenRepository;
 
     @Value("${admin.username}")
     private String adminUsername;
@@ -55,6 +60,7 @@ public class UserService {
 
         String accessToken;
         String refreshToken;
+        RefreshToken refreshTokenEntity = new RefreshToken();
 
         if ((findUser1 == null) && (findUser2 == null)) {
             throw new LoginException("Cannot find User");
@@ -64,12 +70,18 @@ public class UserService {
             }
             accessToken = jwtUtils.generateAccessToken(findUser1);
             refreshToken = jwtUtils.generateRefreshToken(findUser1);
+            refreshTokenEntity.setUser(findUser1);
+            refreshTokenEntity.setRefreshToken(refreshToken);
+            refreshTokenRepository.save(refreshTokenEntity);
         } else {
             if (!bCryptPasswordEncoder.matches(password, findUser2.getPassword())) {
                 throw new LoginException("Password Failed");
             }
             accessToken = jwtUtils.generateAccessToken(findUser2);
             refreshToken = jwtUtils.generateRefreshToken(findUser2);
+            refreshTokenEntity.setUser(findUser2);
+            refreshTokenEntity.setRefreshToken(refreshToken);
+            refreshTokenRepository.save(refreshTokenEntity);
         }
 
         return new LoginResponse(accessToken, refreshToken);
@@ -88,5 +100,29 @@ public class UserService {
 
     public CustomUser findByEmail(String email) {
         return userRepository.findByEmail(email);
+    }
+
+    public void deleteByUsernameFromRefreshTokenRepository(String username) {
+        refreshTokenRepository.deleteByUser_Username(username);
+    }
+
+    public void deleteByTokenFromRefreshTokenRepository(String token) {
+        refreshTokenRepository.deleteByRefreshToken(token);
+    }
+
+    public RefreshToken findByTokenFromRefreshTokenRepository(String token) {
+        return refreshTokenRepository.findByRefreshToken(token);
+    }
+
+    public String reissueRefreshToken(String token) {
+        String username = jwtUtils.getUsernameFromToken(token);
+        CustomUser user = userRepository.findByUsername(username);
+        String newRefreshToken = jwtUtils.generateRefreshToken(user);
+        RefreshToken refreshTokenEntity = new RefreshToken();
+        refreshTokenEntity.setUser(user);
+        refreshTokenEntity.setRefreshToken(newRefreshToken);
+        refreshTokenRepository.save(refreshTokenEntity);
+
+        return newRefreshToken;
     }
 }

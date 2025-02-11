@@ -10,7 +10,7 @@ import java.util.Map;
 
 @RestController
 public class TestController {
-    @GetMapping("/test")
+    @GetMapping("/api/test")
     public ResponseEntity<Map<String, String>> registrationRequest() {
         Map<String, String> map = new HashMap<>();
         map.put("test111", "test222");

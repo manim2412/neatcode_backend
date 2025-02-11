@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class RegisterController {
     private final UserService userService;
 
-    @PostMapping("/register")
+    @PostMapping("/api/register")
     public ResponseEntity<RegistrationResponse> registrationRequest(@Valid @RequestBody RegistrationRequest request) {
         RegistrationResponse response = userService.registration(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
