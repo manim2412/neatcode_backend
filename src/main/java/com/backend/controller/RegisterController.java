@@ -21,6 +21,10 @@ public class RegisterController {
 
     @PostMapping("/api/register")
     public ResponseEntity<RegistrationResponse> registrationRequest(@Valid @RequestBody RegistrationRequest request) {
+        System.out.println("===========");
+        System.out.println(request.getUsername());
+        System.out.println(request.getEmail());
+        System.out.println(request.getPassword());
         RegistrationResponse response = userService.registration(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
