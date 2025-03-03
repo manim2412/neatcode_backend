@@ -5,6 +5,7 @@ import com.backend.exception.CustomJwtException;
 import com.backend.service.CustomUserDetailsService;
 import com.backend.utils.CustomStringUtils;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
@@ -18,6 +19,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
@@ -76,13 +78,14 @@ public class JwtUtils {
     }
 
     public boolean validateToken(String token) {
-        Jws<Claims> claims = Jwts.parser().setSigningKey(key()).build().parseSignedClaims(token);
-
         try {
+            Jws<Claims> claims = Jwts.parser().setSigningKey(key()).build().parseSignedClaims(token);
             Date expiration = claims.getPayload().getExpiration();
             return expiration.after(new Date());
+        } catch (ExpiredJwtException e) {
+            log.info("JwtUtils validateToken ExpiredJwtException");
         } catch (Exception e) {
-            log.info("JwtUtils => validate token error");
+            log.info("JwtUtils validation error");
         }
 
         return true;

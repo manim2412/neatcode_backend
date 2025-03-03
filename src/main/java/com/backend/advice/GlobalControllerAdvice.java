@@ -1,5 +1,6 @@
 package com.backend.advice;
 
+//import com.backend.exception.CustomExpiredJwtException;
 import com.backend.exception.LoginException;
 import com.backend.exception.RefreshTokenException;
 import com.backend.exception.RegistrationException;
@@ -28,9 +29,16 @@ public class GlobalControllerAdvice {
     }
 
     @ExceptionHandler(RefreshTokenException.class)
-    public ResponseEntity<Map<String, String>> refreshTokenException(LoginException exception) {
+    public ResponseEntity<Map<String, String>> refreshTokenException(RefreshTokenException exception) {
         Map<String, String> map = new HashMap<>();
         map.put("message", exception.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(map);
     }
+
+//    @ExceptionHandler(CustomExpiredJwtException.class)
+//    public ResponseEntity<Map<String, String>> customExpiredJwtException(CustomExpiredJwtException exception) {
+//        Map<String, String> map = new HashMap<>();
+//        map.put("message", exception.getMessage());
+//        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(map);
+//    }
 }

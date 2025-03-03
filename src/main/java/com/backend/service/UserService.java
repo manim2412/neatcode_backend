@@ -72,7 +72,10 @@ public class UserService {
             refreshToken = jwtUtils.generateRefreshToken(findUser1);
             refreshTokenEntity.setUser(findUser1);
             refreshTokenEntity.setRefreshToken(refreshToken);
+            refreshTokenRepository.deleteByUsername(findUser1.getUsername());
             refreshTokenRepository.save(refreshTokenEntity);
+//            username = findUser1.getUsername();
+//            email = findUser1.getEmail();
         } else {
             if (!bCryptPasswordEncoder.matches(password, findUser2.getPassword())) {
                 throw new LoginException("Password Failed");
@@ -81,7 +84,10 @@ public class UserService {
             refreshToken = jwtUtils.generateRefreshToken(findUser2);
             refreshTokenEntity.setUser(findUser2);
             refreshTokenEntity.setRefreshToken(refreshToken);
+            refreshTokenRepository.deleteByUsername(findUser2.getUsername());
             refreshTokenRepository.save(refreshTokenEntity);
+//            username = findUser2.getUsername();
+//            email = findUser2.getEmail();
         }
 
         return new LoginResponse(accessToken, refreshToken);
@@ -103,7 +109,7 @@ public class UserService {
     }
 
     public void deleteByUsernameFromRefreshTokenRepository(String username) {
-        refreshTokenRepository.deleteByUser_Username(username);
+        refreshTokenRepository.deleteByUsername(username);
     }
 
     public void deleteByTokenFromRefreshTokenRepository(String token) {
