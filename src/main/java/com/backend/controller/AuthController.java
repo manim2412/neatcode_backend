@@ -7,7 +7,6 @@ import com.backend.jwt.JwtUtils;
 import com.backend.payload.LoginUserInfoResponse;
 import com.backend.payload.LogoutResponse;
 import com.backend.payload.RefreshTokenResponse;
-import com.backend.repository.RefreshTokenRepository;
 import com.backend.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.AllArgsConstructor;
@@ -22,7 +21,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @AllArgsConstructor
 public class AuthController {
-//    private final RefreshTokenRepository refreshTokenRepository;
     private final UserService userService;
     private final JwtUtils jwtUtils;
 
@@ -57,7 +55,6 @@ public class AuthController {
     @GetMapping("/api/user/me")
     public ResponseEntity<LoginUserInfoResponse> loginUserInfo(HttpServletRequest request) {
         String accessToken = jwtUtils.getAccessToken(request);
-//        jwtUtils.validateToken(accessToken);
         String username = jwtUtils.getUsernameFromToken(accessToken);
         CustomUser findUser = userService.findByUsername(username);
         String email = findUser.getEmail();
